@@ -1,0 +1,37 @@
+{
+    "token_oauth_jira": "",
+    "jira_server": "",
+    "jira_mail": "",
+    "jira_token": "",
+    "jira_project": "xx",
+    "jira_custom_field": "customfield_10005",
+    
+    "start_sprint": "2019-12-09",
+    "end_sprint": "2019-12-20",
+    "number_sprint": "6.4",
+
+    "auth_jira": {
+        "mail": "example@mail.com",
+        "token": ""
+    },
+
+    "techs": {
+        "android": "Android",
+        "[ios]": "iOS",
+        "ios -": "iOS",
+        "[web]": "Web",
+        "web -": "Web",
+        "backend": "Backend",
+        "frontend": "React",
+        "fronted": "React",
+        "react": "React"
+    },
+
+    "excluded_status": [
+        "Ready for Design Approval",
+        "In Design",
+        "Concept Approval",
+        "Ready for Design"
+    ]
+
+}
