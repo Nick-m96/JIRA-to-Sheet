@@ -1,9 +1,9 @@
 {
     "token_oauth_jira": "",
-    "jira_server": "",
-    "jira_mail": "",
+    "jira_server": "https://www.atlassian.net/",
+    "jira_mail": "example@mail.com",
     "jira_token": "",
-    "jira_project": "xx",
+    "jira_project": "XX",
     "jira_custom_field": "customfield_10005",
     
     "start_sprint": "2019-12-09",

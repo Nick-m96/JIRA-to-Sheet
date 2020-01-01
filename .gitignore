@@ -1,1 +1,5 @@
 variables.json
+venv/
+.DS_Store
+.vscode/
+client_secret.json
