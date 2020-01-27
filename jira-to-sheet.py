@@ -7,12 +7,24 @@ import time
 from datetime import datetime
 from oauth2client.service_account import ServiceAccountCredentials
 
-def find_tech(text):
+def rename_tech(text):
     t = text.lower()
     for key in techs.keys():
         if t.find(key) != -1:
             return techs[key]
     return 'N/A'
+
+def rename_assignee(name):
+    for key in assignee.keys():
+        if name.find(key) != -1:
+            return assignee[key]
+    return name
+
+def rename_status(name):
+    for key in status.keys():
+        if name.find(key) != -1:
+            return status[key]
+    return name
 
 def string_to_date(text):
     date = datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f%z')
@@ -21,20 +33,20 @@ def string_to_date(text):
 def update_timeline(issues, is_mc, index):
     for issue in issues:
         if not is_excluded_status(issue.fields.status.name):
-            status = issue.fields.status.name
+            status = rename_status(issue.fields.status.name)
 
             title_card = issue.fields.summary
             card_id = issue.key
-            tech = find_tech(title_card)
+            tech = rename_tech(title_card)
 
             try:
-                assignee = issue.fields.assignee.name
+                assignee = rename_assignee(issue.fields.assignee.name)
             except AttributeError:
                 assignee = 'Sin Asignacion'
 
             if is_mc:
                 try:
-                    board = issue.fields.components[0].name
+                    board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
                     if board != 'Mejora Continua':
                         issue.update(fields={"components" : [{'name': 'Mejora Continua'}]})
                         board = 'Mejora Continua'
@@ -43,21 +55,20 @@ def update_timeline(issues, is_mc, index):
                     issue.update(fields={"components" : [{'name': 'Mejora Continua'}]})
             else:       
                 try:
-                    board = issue.fields.components[0].name
+                    board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
                 except:
                     board = 'Sin Asignar'
                         
-
             row = [
                 id_sprint,
                 card_id,
                 board,
-                title_card,
                 tech,
+                title_card,
                 assignee,
                 status
             ]
-            if (is_mc and status =='Itens concluídos') or not is_mc:
+            if (is_mc and status =='Done') or not is_mc:
                 update_row(row, index, worksheet_timeline)
                 index += 1
                 time.sleep(1.73)
@@ -132,9 +143,9 @@ def update_movements(issues, index):
     for issue in issues:
         card_id = issue.key
         title_card = issue.fields.summary
-        tech = find_tech(title_card)
+        tech = rename_tech(title_card)
         try:
-            board = issue.fields.components[0].name
+            board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
         except:
             board = 'Sin Asignar'
         for history in issue.changelog.histories:
@@ -147,7 +158,7 @@ def update_movements(issues, index):
                     tech,
                     title_card,
                     item.fromString,
-                    item.toString, 
+                    rename_status(item.toString), 
                     str(date),
                     time_in_transition(index),
                     is_qa_reject(index),
@@ -166,16 +177,17 @@ if __name__ == '__main__':
     with open('variables.json') as js_file:
         data = json.load(js_file)
         techs = data['techs']
+        assignee = data['assignee']
+        status = data['status']
         excluded_status = data['excluded_status']
-        start_sprint = data['start_sprint'] #start_sprint
-        end_sprint = data['end_sprint'] #end_sprint
-        id_channel = data['id_channel']
+        start_sprint = data['start_sprint']
+        end_sprint = data['end_sprint'] 
         id_sprint = data['number_sprint']
         jira_client = data['jira_server']
         jira_mail = data['jira_mail']
         jira_token = data['jira_token']
         jira_project = data['jira_project']
-           
+
     #google sheets
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
@@ -187,7 +199,7 @@ if __name__ == '__main__':
     # JIRA
     jira = JIRA(server=jira_client, basic_auth=(jira_mail,jira_token))
 
-    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype != Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+    issues_story = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
     issues_incident = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
     
     print('Actualizando Timeline')
