@@ -195,12 +195,14 @@ if __name__ == '__main__':
     spreadsheet = client.open("Dashboard")
     worksheet_movements = spreadsheet.worksheet('Movements')
     worksheet_timeline = spreadsheet.worksheet('Timeline')
+    worksheet_errores = spreadsheet.worksheet('Errores')
 
     # JIRA
     jira = JIRA(server=jira_client, basic_auth=(jira_mail,jira_token))
 
     issues_story = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
     issues_incident = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
     
     print('Actualizando Timeline')
     fill_timeline()
