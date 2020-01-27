@@ -102,7 +102,7 @@ def get_sort_request(sheetId,end_row, end_column):
         "responseIncludeGridData": False}
 
 def time_in_transition(index):
-    return '=IF(AND(F{}=E{}, B{}=B{}), G{}-G{},)'.format(index,index+1,index,index+1,index+1,index)
+    return '=IF(AND(F{}=E{}, B{}=B{}), (NETWORKDAYS(G{},G{})-1)*(Resume!$AC$2-Resume!$AC$1)+IF(NETWORKDAYS(G{},G{}),MEDIAN(MOD(G{},1),Resume!$AC$2,Resume!$AC$1),0)-MEDIAN(NETWORKDAYS(G{},G{})*MOD(G{},1),Resume!$AC$2,Resume!$AC$1),)'.format(index, index+1, index, index+1, index, index+1, index+1, index+1, index+1, index, index, index)
 
 def is_excluded_status(status):
     return status in excluded_status
