@@ -171,6 +171,35 @@ def update_movements(issues, index):
     sortRequest = spreadsheet.batch_update(get_sort_request(worksheet_movements.id, index-1, len(row)))
     return  index
 
+def update_bugs(issues):
+    values_list = worksheet_errores.col_values(1)
+    index = worksheet_errores.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
+
+    for issue in issues:
+        card_id = issue.key
+        title_card = issue.fields.summary
+        priority = issue.fields.priority.name
+
+        issuelinks = issue.fields.issuelinks
+        card_linked = next((issue.outwardIssue for issue in issuelinks if issue.type.name == 'Blocks'))
+        card_linked_key = card_linked.key
+        card_linked_name = card_linked.fields.summary
+        board = 'Evolutivas' if card_linked.fields.issuetype.name == 'Historia' else 'Mejora Continua'
+                    
+        row = [
+            id_sprint,
+            card_id,
+            title_card,
+            priority,
+            card_linked_key,
+            card_linked_name,
+            board
+        ]
+
+        update_row(row, index, worksheet_errores)
+        index += 1
+        time.sleep(1.73)
+
 if __name__ == '__main__':
 
     #json
@@ -206,6 +235,9 @@ if __name__ == '__main__':
     
     print('Actualizando Timeline')
     fill_timeline()
+
+    print('Actualizando Bugs')
+    update_bugs(issues_bug)
 
     print('Actualizando Movements')
     fill_movements()
