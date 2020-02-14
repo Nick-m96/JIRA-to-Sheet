@@ -30,7 +30,7 @@ def string_to_date(text):
     date = datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f%z')
     return datetime.strptime(date.strftime('%m-%d-%y %H:%M:%S'), '%m-%d-%y %H:%M:%S')
 
-def update_timeline(issues, is_mc, index):
+def update_timeline(issues, is_mc, index, worksheet):
     for issue in issues:
         if not is_excluded_status(issue.fields.status.name):
             status = rename_status(issue.fields.status.name)
@@ -69,7 +69,7 @@ def update_timeline(issues, is_mc, index):
                 status
             ]
             if (is_mc and status =='Done') or not is_mc:
-                update_row(row, index, worksheet_timeline)
+                update_row(row, index, worksheet)
                 index += 1
                 time.sleep(1.73)
     return index
@@ -121,21 +121,7 @@ def is_excluded_status(status):
 def is_qa_reject(index):
     return '=IF(AND(OR(E{}="Testing", E{}="Ready for Testing"), F{}="In Progress"), TRUE, FALSE)'.format(index,index,index)
 
-def fill_timeline():
-    values_list = worksheet_timeline.col_values(1)
-    index = worksheet_timeline.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
-    
-    index = update_timeline(issues, False, index)
-    update_timeline(issues_incident, True, index)
-
-def fill_movements():
-    values_list = worksheet_movements.col_values(1)
-    index = worksheet_movements.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
-
-    index = update_movements(issues, index)
-    update_movements(issues_incident, index) 
-
-def update_movements(issues, index): 
+def update_movements(issues, index, worksheet): 
     start = datetime.strptime(start_sprint, '%Y-%m-%d')
     end = datetime.strptime(end_sprint, '%Y-%m-%d')
     row = []
@@ -164,16 +150,14 @@ def update_movements(issues, index):
                     is_qa_reject(index),
                     board
                 ]
-                update_row(row, index, worksheet_movements)
+                update_row(row, index, worksheet)
                 index += 1
                 time.sleep(1.73)
 
-    sortRequest = spreadsheet.batch_update(get_sort_request(worksheet_movements.id, index-1, len(row)))
+    sortRequest = spreadsheet.batch_update(get_sort_request(worksheet.id, index-1, len(row)))
     return  index
 
-def update_bugs(issues):
-    values_list = worksheet_errores.col_values(1)
-    index = worksheet_errores.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
+def update_bugs(issues, index, worksheet):
 
     for issue in issues:
         card_id = issue.key
@@ -184,6 +168,8 @@ def update_bugs(issues):
         card_linked = next((issue.outwardIssue for issue in issuelinks if issue.type.name == 'Blocks'))
         card_linked_key = card_linked.key
         card_linked_name = card_linked.fields.summary
+        card_linked_points = jira.issue(card_linked.key).fields.customfield_10005
+        
         board = 'Evolutivas' if card_linked.fields.issuetype.name == 'Historia' else 'Mejora Continua'
                     
         row = [
@@ -193,12 +179,54 @@ def update_bugs(issues):
             priority,
             card_linked_key,
             card_linked_name,
+            card_linked_points,
             board
         ]
 
-        update_row(row, index, worksheet_errores)
+        update_row(row, index, worksheet)
         index += 1
         time.sleep(1.73)
+
+def get_index(worksheet):
+    values_list = worksheet.col_values(1)
+    index = worksheet.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
+    return index
+
+def update_ev(client, jira):
+    spreadsheet = client.open("Dashboard - Evolutivas")
+    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+    
+    worksheet_movements = spreadsheet.worksheet('Movements')
+    worksheet_timeline = spreadsheet.worksheet('Timeline')
+    worksheet_errores = spreadsheet.worksheet('Errores')
+    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+
+    # print('Actualizando Movements')
+    # update_movements(issues, get_index(worksheet_movements), worksheet_movements)
+    
+    # print('Actualizando Timeline')
+    # update_timeline(issues, False, get_index(worksheet_timeline))
+    
+    print('Actualizando Bugs')
+    update_bugs(issues_bug, get_index(worksheet_errores), worksheet_errores)
+
+def update_mc(client, jira):
+    spreadsheet = client.open("Dashboard - Mejora Continua")
+    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+    
+    worksheet_movements = spreadsheet.worksheet('Movements')
+    worksheet_timeline = spreadsheet.worksheet('Timeline')
+    worksheet_errores = spreadsheet.worksheet('Errores')
+    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+
+    print('Actualizando Movements')
+    update_movements(issues, get_index(worksheet_movements), worksheet_movements)
+    
+    print('Actualizando Timeline')
+    update_timeline(issues, False, get_index(worksheet_timeline))
+    
+    print('Actualizando Bugs')
+    update_bugs(issues_bug)
 
 if __name__ == '__main__':
 
@@ -221,25 +249,17 @@ if __name__ == '__main__':
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
     creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
     client = gspread.authorize(creds)
-    spreadsheet = client.open("Dashboard")
-    worksheet_movements = spreadsheet.worksheet('Movements')
-    worksheet_timeline = spreadsheet.worksheet('Timeline')
-    worksheet_errores = spreadsheet.worksheet('Errores')
 
     # JIRA
     jira = JIRA(server=jira_client, basic_auth=(jira_mail,jira_token))
-
-    issues_story = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    issues_incident = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
     
-    print('Actualizando Timeline')
-    fill_timeline()
+    #Proyecto Evolutivas
+    if( input('Actualizar Evolutivas? [s/n]') == 's'):
+        update_ev(client, jira)
 
-    print('Actualizando Bugs')
-    update_bugs(issues_bug)
-
-    print('Actualizando Movements')
-    fill_movements()
+    #Proyecto Mejora Continua
+    if(input('Actualizar Mejora Continua? [s/n]') == 's'):
+        update_mc(client, jira)
+        
 
     
