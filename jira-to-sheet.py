@@ -121,7 +121,7 @@ def is_excluded_status(status):
 def is_qa_reject(index):
     return '=IF(AND(OR(E{}="Testing", E{}="Ready for Testing"), F{}="In Progress"), TRUE, FALSE)'.format(index,index,index)
 
-def update_movements(issues, index, worksheet): 
+def update_movements(issues, index, worksheet, spreadsheet): 
     start = datetime.strptime(start_sprint, '%Y-%m-%d')
     end = datetime.strptime(end_sprint, '%Y-%m-%d')
     row = []
@@ -158,7 +158,6 @@ def update_movements(issues, index, worksheet):
     return  index
 
 def update_bugs(issues, index, worksheet):
-
     for issue in issues:
         card_id = issue.key
         title_card = issue.fields.summary
@@ -195,35 +194,24 @@ def get_index(worksheet):
 def update_ev(client, jira):
     spreadsheet = client.open("Dashboard - Evolutivas")
     issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    
-    worksheet_movements = spreadsheet.worksheet('Movements')
-    worksheet_timeline = spreadsheet.worksheet('Timeline')
-    worksheet_errores = spreadsheet.worksheet('Errores')
-    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-
-    # print('Actualizando Movements')
-    # update_movements(issues, get_index(worksheet_movements), worksheet_movements)
-    
-    # print('Actualizando Timeline')
-    # update_timeline(issues, False, get_index(worksheet_timeline))
-    
-    print('Actualizando Bugs')
-    update_bugs(issues_bug, get_index(worksheet_errores), worksheet_errores)
+    update_spreadsheet(spreadsheet, issues)
 
 def update_mc(client, jira):
     spreadsheet = client.open("Dashboard - Mejora Continua")
     issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    
+    update_spreadsheet(spreadsheet, issues)
+
+def update_spreadsheet(spreadsheet, issues):
     worksheet_movements = spreadsheet.worksheet('Movements')
     worksheet_timeline = spreadsheet.worksheet('Timeline')
     worksheet_errores = spreadsheet.worksheet('Errores')
     issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
 
     print('Actualizando Movements')
-    update_movements(issues, get_index(worksheet_movements), worksheet_movements)
+    update_movements(issues, get_index(worksheet_movements), worksheet_movements, spreadsheet)
     
-    print('Actualizando Timeline')
-    update_timeline(issues, False, get_index(worksheet_timeline))
+    # print('Actualizando Timeline')
+    # update_timeline(issues, False, get_index(worksheet_timeline))
     
     print('Actualizando Bugs')
     update_bugs(issues_bug)
