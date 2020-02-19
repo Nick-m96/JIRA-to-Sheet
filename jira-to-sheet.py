@@ -130,6 +130,7 @@ def update_movements(issues, index, worksheet, spreadsheet):
         card_id = issue.key
         title_card = issue.fields.summary
         tech = rename_tech(title_card)
+        story_point = issue.fields.customfield_10005
         try:
             board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
         except:
@@ -147,6 +148,7 @@ def update_movements(issues, index, worksheet, spreadsheet):
                     rename_status(item.toString), 
                     str(date),
                     time_in_transition(index),
+                    story_point,
                     is_qa_reject(index),
                     board
                 ]
@@ -210,11 +212,11 @@ def update_spreadsheet(spreadsheet, issues):
     print('Actualizando Movements')
     update_movements(issues, get_index(worksheet_movements), worksheet_movements, spreadsheet)
     
-    # print('Actualizando Timeline')
-    # update_timeline(issues, False, get_index(worksheet_timeline))
+    print('Actualizando Timeline')
+    update_timeline(issues, False, get_index(worksheet_timeline))
     
     print('Actualizando Bugs')
-    update_bugs(issues_bug)
+    update_bugs(issues_bug, get_index(worksheet_errores), worksheet_errores)
 
 if __name__ == '__main__':
 
