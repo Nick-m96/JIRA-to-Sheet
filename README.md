@@ -1,7 +1,3 @@
-## 
-
-![Logo of the Python](https://docs.humio.com/integrations/python.svg)
-
 # JIRA to Sheet
 
 
