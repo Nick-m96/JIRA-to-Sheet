@@ -23,11 +23,3 @@ pip install -r requirements.txt
 ### Initial Configuration
 
 Rename `example.json` to `variables.json` and add all the parameters you need.
-
-## Licensing
-
-One really important part: Give your project a proper license. Here you should
-state what the license is and how to find the text version of the license.
-Something like:
-
-"The code in this project is licensed under MIT license."
