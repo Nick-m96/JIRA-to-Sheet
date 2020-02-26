@@ -4,18 +4,25 @@
 Creation and automation of Metrics in Projects using Jira Software.
 Using Google Sheet as a support we can see the status of the functionalities, the changes of state that occurred, how long it was in each one and how many rework the team performed.
 
-## Installing / Getting started
+## Installing
 
 A quick introduction of the minimal setup you need to get a hello world up &
 running.
 
-```shell
-$ brew install python3
+### Install Python3 if necessary
 
-### Optional ###
+[Python Page](https://www.python.org/downloads/)
+
+### Getting started
+
+```shell
+git clone https://github.com/NickMano/JIRA-to-Sheet.git
+cd JIRA-to-Sheet
+
+### Recomended ###
 python3 -m venv venv 
 source venv/bin/activate
-### Optional ### 
+### Recomended ### 
 
 pip install -r requirements.txt
 ```
