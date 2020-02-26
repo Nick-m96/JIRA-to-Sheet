@@ -14,12 +14,6 @@ def rename_tech(text):
             return techs[key]
     return 'N/A'
 
-def rename_assignee(name):
-    for key in assignee.keys():
-        if name.find(key) != -1:
-            return assignee[key]
-    return name
-
 def rename_status(name):
     for key in status.keys():
         if name.find(key) != -1:
@@ -29,50 +23,6 @@ def rename_status(name):
 def string_to_date(text):
     date = datetime.strptime(text, '%Y-%m-%dT%H:%M:%S.%f%z')
     return datetime.strptime(date.strftime('%m-%d-%y %H:%M:%S'), '%m-%d-%y %H:%M:%S')
-
-def update_timeline(issues, is_mc, index, worksheet):
-    for issue in issues:
-        if not is_excluded_status(issue.fields.status.name):
-            status = rename_status(issue.fields.status.name)
-
-            title_card = issue.fields.summary
-            card_id = issue.key
-            tech = rename_tech(title_card)
-
-            try:
-                assignee = rename_assignee(issue.fields.assignee.name)
-            except AttributeError:
-                assignee = 'Sin Asignacion'
-
-            if is_mc:
-                try:
-                    board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
-                    if board != 'Mejora Continua':
-                        issue.update(fields={"components" : [{'name': 'Mejora Continua'}]})
-                        board = 'Mejora Continua'
-                except:
-                    board = 'Mejora Continua'
-                    issue.update(fields={"components" : [{'name': 'Mejora Continua'}]})
-            else:       
-                try:
-                    board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
-                except:
-                    board = 'Sin Asignar'
-                        
-            row = [
-                id_sprint,
-                card_id,
-                board,
-                tech,
-                title_card,
-                assignee,
-                status
-            ]
-            if (is_mc and status =='Done') or not is_mc:
-                update_row(row, index, worksheet)
-                index += 1
-                time.sleep(1.73)
-    return index
 
 def update_row(data, index_row, ws):
     cell_list = ws.range('A{}:{}{}'.format(index_row,chr(64+len(data)),index_row))
@@ -193,21 +143,14 @@ def get_index(worksheet):
     index = worksheet.find(id_sprint).row if id_sprint in values_list else len(values_list) + 1
     return index
 
-def update_ev(client, jira):
-    spreadsheet = client.open("Dashboard - Evolutivas")
-    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    update_spreadsheet(spreadsheet, issues)
-
-def update_mc(client, jira):
-    spreadsheet = client.open("Dashboard - Mejora Continua")
-    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Incidente".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
-    update_spreadsheet(spreadsheet, issues)
-
-def update_spreadsheet(spreadsheet, issues):
+def update(client, jira):
+    spreadsheet = client.open("Dashboard - Evolutivas") #Replace to sheet_name
     worksheet_movements = spreadsheet.worksheet('Movements')
     worksheet_timeline = spreadsheet.worksheet('Timeline')
     worksheet_errores = spreadsheet.worksheet('Errores')
-    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog')
+
+    issues = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Story".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog') #Replace to jira-issuetype
+    issues_bug = jira.search_issues("project = {} AND status changed DURING({}, {}) AND issuetype = Bug".format(jira_project, start_sprint, end_sprint), maxResults=100, expand='changelog') #Replace to jira-issuetype-bug
 
     print('Actualizando Movements')
     update_movements(issues, get_index(worksheet_movements), worksheet_movements, spreadsheet)
@@ -240,16 +183,8 @@ if __name__ == '__main__':
     creds = ServiceAccountCredentials.from_json_keyfile_name('client_secret.json', scope)
     client = gspread.authorize(creds)
 
-    # JIRA
     jira = JIRA(server=jira_client, basic_auth=(jira_mail,jira_token))
     
-    #Proyecto Evolutivas
     if( input('Actualizar Evolutivas? [s/n]') == 's'):
-        update_ev(client, jira)
-
-    #Proyecto Mejora Continua
-    if(input('Actualizar Mejora Continua? [s/n]') == 's'):
-        update_mc(client, jira)
-        
-
+        update(client, jira)
     
