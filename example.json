@@ -1,37 +1,27 @@
 {
-    "token_oauth_jira": "",
     "jira_server": "https://www.atlassian.net/",
     "jira_mail": "example@mail.com",
     "jira_token": "",
-    "jira_project": "XX",
-    "jira_custom_field": "customfield_10005",
+    "jira_project_key": "XX",
+    "jira-issuetype": "",
+    "jira-issuetype-bug": "",
     
-    "start_sprint": "2019-12-09",
-    "end_sprint": "2019-12-20",
-    "number_sprint": "6.4",
-
-    "auth_jira": {
-        "mail": "example@mail.com",
-        "token": ""
-    },
+    "story_points_field": "",
+    "severity_field": "",
+    
+    "sheet_name": "",
+    
+    "start_sprint": "YYYY-MM-dd",
+    "end_sprint": "YYYY-MM-dd",
+    "number_sprint": "",
 
     "techs": {
-        "android": "Android",
-        "[ios]": "iOS",
-        "ios -": "iOS",
-        "[web]": "Web",
-        "web -": "Web",
-        "backend": "Backend",
-        "frontend": "React",
-        "fronted": "React",
-        "react": "React"
+    },
+
+    "status": {
     },
 
     "excluded_status": [
-        "Ready for Design Approval",
-        "In Design",
-        "Concept Approval",
-        "Ready for Design"
     ]
 
 }

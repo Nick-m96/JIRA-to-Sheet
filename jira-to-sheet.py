@@ -176,7 +176,7 @@ if __name__ == '__main__':
         jira_client = data['jira_server']
         jira_mail = data['jira_mail']
         jira_token = data['jira_token']
-        jira_project = data['jira_project']
+        jira_project = data['jira_project_key']
 
     #google sheets
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
