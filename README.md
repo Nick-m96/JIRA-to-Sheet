@@ -30,3 +30,9 @@ pip install -r requirements.txt
 ### Initial Configuration
 
 Rename `example.json` to `variables.json` and add all the parameters you need.
+
+### Usage
+
+```shell
+python3 jira-to-sheet.py
+```
