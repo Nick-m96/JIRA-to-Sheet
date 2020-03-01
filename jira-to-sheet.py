@@ -80,9 +80,9 @@ def update_movements(issues, index, worksheet, spreadsheet):
         card_id = issue.key
         title_card = issue.fields.summary
         tech = rename_tech(title_card)
-        story_point = issue.fields.customfield_10005
+        story_point = issue.raw['fields'][story_points_field]
         try:
-            board = issue.fields.components[0].name if issue.fields.components[0].name != 'General' else 'Evolutivas'
+            board = issue.fields.components[0].name
         except:
             board = 'Sin Asignar'
         for history in issue.changelog.histories:
@@ -113,15 +113,15 @@ def update_bugs(issues, index, worksheet):
     for issue in issues:
         card_id = issue.key
         title_card = issue.fields.summary
-        priority = issue.fields.priority.name
+        priority = issue.raw['fields'][story_points_field]
 
         issuelinks = issue.fields.issuelinks
         card_linked = next((issue.outwardIssue for issue in issuelinks if issue.type.name == 'Blocks'))
         card_linked_key = card_linked.key
         card_linked_name = card_linked.fields.summary
-        card_linked_points = jira.issue(card_linked.key).fields.customfield_10005
+        card_linked_points = jira.issue(card_linked.key).raw['fields'][story_points_field]
         
-        board = 'Evolutivas' if card_linked.fields.issuetype.name == 'Historia' else 'Mejora Continua'
+        board = 'Historia' if card_linked.fields.issuetype.name == 'Historia' else 'Otro'
                     
         row = [
             id_sprint,
@@ -167,7 +167,6 @@ if __name__ == '__main__':
     with open('variables.json') as js_file:
         data = json.load(js_file)
         techs = data['techs']
-        assignee = data['assignee']
         status = data['status']
         excluded_status = data['excluded_status']
         start_sprint = data['start_sprint']
@@ -177,6 +176,8 @@ if __name__ == '__main__':
         jira_mail = data['jira_mail']
         jira_token = data['jira_token']
         jira_project = data['jira_project_key']
+        story_points_field = data['story_points_field']
+        severity_field = data['severity_field']
 
     #google sheets
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
